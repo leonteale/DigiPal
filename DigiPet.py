@@ -5,7 +5,8 @@ import random
 import time
 from blessed import Terminal
 from pet_initialization import initialize_pet
-from pet_display import display_pet, clear_screen
+from pet_display import display_pet, clear_screen, pet_ascii
+from pet_menu import display_menu
 
 # Initialize the terminal
 term = Terminal()
@@ -47,9 +48,8 @@ def display_pet_and_menu():
         # Display the pet
         display_pet(pet_x, pet_y)
 
-        # Print the menu options
-        menu_text = "Menu: 1. Info  |  2. Feed  |  3. Play  |  4. Exit"
-        print(term.move_xy(0, box_height) + term.black_on_white(menu_text))
+        # Display the menu
+        display_menu()
 
 # Main function
 def main():
