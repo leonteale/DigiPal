@@ -10,7 +10,7 @@ import sys
 import tty
 import datetime
 
-# ASCII Art for the DigiPet
+# ASCII Art for the DigiPal
 dog = """
  / \__
 (    @\__ 
@@ -28,8 +28,9 @@ _______
 |_____|
 """
 
-# File to store the DigiPet's data
-DATA_FILE = os.path.expanduser('~/.DigiPet/data.pickle')
+# Directory to store the DigiPal's data
+DATA_DIRECTORY = os.path.expanduser('~/.DigiPal')
+DATA_FILE = os.path.join(DATA_DIRECTORY, 'data.pickle')
 
 def get_key():
     """
@@ -44,8 +45,8 @@ def get_key():
         termios.tcsetattr(file_descriptor, termios.TCSADRAIN, old_settings)
     return ch
 
-# Initialize the attributes of the DigiPet
-class DigiPet:
+# Initialize the attributes of the DigiPal
+class DigiPal:
     def __init__(self, name, terminal_size):
         self.name = name
         self.hunger = 50
@@ -107,6 +108,12 @@ def draw_border(pet):
 def display_quick_stats(pet):
     print(f'\n\nHunger: {pet.hunger} | Age: {pet.age} | Feelings: {pet.feelings}\n\n')
 
+def create_data_directory():
+    """
+    Create the data directory if it doesn't exist.
+    """
+    os.makedirs(DATA_DIRECTORY, exist_ok=True)
+
 def signal_handler(sig, frame):
     # Save the pet's data when the game is exited with ctrl+c
     pet.last_activity = datetime.datetime.now()
@@ -117,6 +124,8 @@ def signal_handler(sig, frame):
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
+
+    create_data_directory()
 
     terminal_size = get_terminal_size()
 
@@ -130,8 +139,8 @@ if __name__ == "__main__":
         if datetime.datetime.now() - pet.last_activity > datetime.timedelta(hours=1):
             pet.hunger = max(0, pet.hunger - random.randint(20, 60))
     else:
-        pet_name = input("What do you want to name your DigiPet? ")
-        pet = DigiPet(pet_name, terminal_size)
+        pet_name = input("What do you want to name your DigiPal? ")
+        pet = DigiPal(pet_name, terminal_size)
 
     while True:
         os.system('clear')
@@ -163,8 +172,8 @@ if __name__ == "__main__":
         elif choice == "4":
             break
         elif choice == "5":
-            pet_name = input("What do you want to name your new DigiPet? ")
-            pet = DigiPet(pet_name, terminal_size)
+            pet_name = input("What do you want to name your new DigiPal? ")
+            pet = DigiPal(pet_name, terminal_size)
         else:
             print("Invalid option. Please choose a valid option.")
 
