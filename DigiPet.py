@@ -5,13 +5,7 @@ import random
 import time
 from blessed import Terminal
 from pet_initialization import initialize_pet
-
-# Define the pet's ASCII art representation
-pet_ascii = r"""
-   /\_/\
- ( o.o )
- > ^ <
-"""
+from pet_display import display_pet, clear_screen
 
 # Initialize the terminal
 term = Terminal()
@@ -24,10 +18,6 @@ menu_height = 5
 # Initial position of the pet
 pet_x = box_width // 2
 pet_y = box_height // 2
-
-# Function to clear the terminal screen
-def clear_screen():
-    print(term.clear)
 
 # Function to move the pet
 def move_pet():
@@ -54,10 +44,8 @@ def display_pet_and_menu():
             print(term.white('│' + ' ' * (box_width - 2) + '│'))
         print(term.white('─' * box_width))
 
-        # Print the pet
-        lines = pet_ascii.strip().split('\n')
-        for i, line in enumerate(lines):
-            print(term.move_xy(pet_x, pet_y + i) + line)
+        # Display the pet
+        display_pet(pet_x, pet_y)
 
         # Print the menu options
         menu_text = "Menu: 1. Info  |  2. Feed  |  3. Play  |  4. Exit"
