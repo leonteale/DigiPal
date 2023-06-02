@@ -1,70 +1,97 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import random
 import time
-from blessed import Terminal
-from pet_initialization import initialize_pet
-from pet_display import display_pet, clear_screen, pet_ascii
-from pet_menu import display_menu
+import pickle
 
-# Initialize the terminal
-term = Terminal()
+# ASCII Art for the DigiPet
+dog = """
+ / \__
+(    @\__ 
+ /         O
+/   (_____/
+/_____/ U
+"""
 
-# Define the dimensions of the pet's square box and menu
-box_width = 40
-box_height = 10
-menu_height = 5
+# File to store the DigiPet's data
+DATA_FILE = os.path.expanduser('~/.DigiPet/data.pickle')
 
-# Initial position of the pet
-pet_x = box_width // 2
-pet_y = box_height // 2
+# Initialize the attributes of the DigiPet
+class DigiPet:
+    def __init__(self, name):
+        self.name = name
+        self.hunger = 50
+        self.age = 0
+        self.feelings = 'Happy'
+        self.status = 'Healthy'
+        self.position = [5, 5]
 
-# Function to move the pet
-def move_pet():
-    global pet_x, pet_y
+    def info(self):
+        print(f'\n\nName: {self.name}\nHunger: {self.hunger}\nAge: {self.age}\nFeelings: {self.feelings}\nStatus: {self.status}\n\n')
 
-    # Generate random movements within a larger range
-    dx = random.randint(-2, 2)
-    dy = random.randint(-2, 2)
+    def move(self):
+        self.position = [random.randint(0, 30), random.randint(0, 10)]
+        self.hunger -= 5
 
-    # Update the pet's position
-    pet_x += dx
-    pet_y += dy
+    def feed(self):
+        if self.hunger < 100:
+            self.hunger += 10
+        else:
+            print(f'{self.name} is already full.')
 
-    # Keep the pet within the boundaries of the box
-    pet_x = max(2, min(pet_x, box_width - len(pet_ascii.split('\n')[0]) - 2))
-    pet_y = max(2, min(pet_y, box_height - pet_ascii.count('\n') - 2))
+    def play(self):
+        if self.feelings != 'Excited':
+            self.feelings = 'Excited'
+        else:
+            print(f'{self.name} is already excited')
 
-# Function to display the pet and menu
-def display_pet_and_menu():
-    with term.location(0, 0):
-        # Draw the box
-        print(term.white('─' * box_width))
-        for _ in range(box_height - 2):
-            print(term.white('│' + ' ' * (box_width - 2) + '│'))
-        print(term.white('─' * box_width))
-
-        # Display the pet
-        display_pet(pet_x, pet_y)
-
-        # Display the menu
-        display_menu()
-
-# Main function
-def main():
-    # Check if the data file exists
-    data_file = os.path.expanduser("~/.Digipet/data.txt")
-    if not os.path.exists(data_file):
-        initialize_pet()
-
-    with term.fullscreen(), term.hidden_cursor():
-        while True:
-            clear_screen()
-            display_pet_and_menu()
-            move_pet()
-            time.sleep(0.5)  # Adjust the delay as desired for the pet's movement speed
-
-# Execute the main function
+# Main program
 if __name__ == "__main__":
-    main()
+    # Create the directory for the data file if it does not exist
+    os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
+
+    try:
+        # Load existing pet
+        with open(DATA_FILE, 'rb') as file:
+            pet = pickle.load(file)
+    except (FileNotFoundError, EOFError):
+        # If there's no existing pet, ask for a name to create a new one
+        pet_name = input("What do you want to name your DigiPet? ")
+        pet = DigiPet(pet_name)
+
+    while True:
+        os.system('clear')  # Clear the terminal
+
+        # Print spaces to simulate movement
+        print('\n' * pet.position[1], end='')  # Move Down
+        print(' ' * pet.position[0], end='')  # Move Right
+        print(dog)  # Display the ASCII dog
+
+        print("\n\n1. Info | 2. Feed | 3. Play | 4. Move | 5. Start New Game | 6. Exit")
+
+        choice = input("Choose an option: ")
+
+        if choice == "1":
+            pet.info()
+            time.sleep(2)  # Pause to allow reading
+        elif choice == "2":
+            pet.feed()
+        elif choice == "3":
+            pet.play()
+        elif choice == "4":
+            pet.move()
+        elif choice == "5":
+            # Start a new game
+            pet_name = input("What do you want to name your new DigiPet? ")
+            pet = DigiPet(pet_name)
+        elif choice == "6":
+            break
+        else:
+            print("Invalid option. Please choose a valid option.")
+
+        # Save the pet's data
+        with open(DATA_FILE, 'wb') as file:
+            pickle.dump(pet, file)
+
+        time.sleep(1)  # Pause between actions
