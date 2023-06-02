@@ -58,8 +58,8 @@ class DigiPal:
         self.hunger = 50
         self.age = 0
         self.date_of_birth = datetime.date.today()
-        self.feelings = 'Happy'
-        self.status = 'Healthy'
+        self.feelings = 'Full'
+        self.status = 'Unhealthy'
         self.position = [terminal_size[0]//2, terminal_size[1]//2]
         self.terminal_size = terminal_size
         self.boundary = [terminal_size[0]//2, terminal_size[1]//2]
@@ -67,9 +67,14 @@ class DigiPal:
         self.death_time = None
         self.feed_count = 0
         self.last_feed_time = None
+        self.happiness = random.randint(50, 75)
+        self.play_count = 0
+        self.last_play_time = None
+        self.tiredness = 0
+        self.sleep_time = None
 
     def info(self):
-        print(f'\n\nName: {self.name}\nHunger: {self.hunger}\nDate of Birth: {self.date_of_birth}\nAge: {(datetime.date.today() - self.date_of_birth).days}\nFeelings: {self.feelings}\nStatus: {self.status}\n\n')
+        print(f'Hunger: {self.hunger} | Happiness: {self.happiness} | Age: {self.age} | Feelings: {self.feelings} | Status: {self.status} | Tiredness: {self.tiredness}')
 
     def move(self):
         if self.hunger <= 0 and (self.death_time is None or (datetime.datetime.now() - self.death_time).total_seconds() >= 5 * 60):
@@ -77,6 +82,10 @@ class DigiPal:
             return
         elif self.hunger <= 0 and self.death_time is None:
             self.death_time = datetime.datetime.now()
+
+        new_position = [random.randint(0, self.boundary[0]), random.randint(0, self.boundary[1])]
+        if 0 <= new_position[0] < self.boundary[0] and 0 <= new_position[1] < self.boundary[1]:
+            self.position = new_position
 
         if (datetime.datetime.now() - self.last_activity).total_seconds() >= random.randint(1, 5) * 60:
             self.hunger = max(0, self.hunger - random.randint(1, 5))
@@ -89,8 +98,21 @@ class DigiPal:
         else:
             self.feelings = 'Full'
 
+        if self.tiredness >= 90:
+            self.status = 'Tired'
+            self.sleep()
+        elif self.hunger <= 40:
+            self.status = 'Unhealthy'
+        else:
+            self.status = 'Healthy'
+
+        if self.status == 'Sleeping' and datetime.datetime.now() >= self.sleep_time:
+            self.status = 'Healthy'
+            self.sleep_time = None
+            self.happiness = random.randint(50, 75)
+
     def feed(self):
-        if self.status == 'Dead':
+        if self.status == 'Dead' or self.status == 'Sleeping':
             return
         now = datetime.datetime.now()
         if self.last_feed_time is not None and (now - self.last_feed_time).total_seconds() <= 30:
@@ -103,22 +125,55 @@ class DigiPal:
             self.feelings = 'Overfed'
             self.hunger = min(100, self.hunger + random.randint(1, 5)) # Overfeeding only slightly increases hunger
             self.status = 'Unhealthy' if random.random() < 0.1 else self.status # 10% chance of becoming unhealthy due to overfeeding
+            self.tiredness = min(100, self.tiredness + 35)
         else:
             self.hunger = min(100, self.hunger + random.randint(5, 20))
 
+    def play(self):
+        if self.status == 'Dead' or self.status == 'Sleeping':
+            return
+        now = datetime.datetime.now()
+        if self.last_play_time is not None and (now - self.last_play_time).total_seconds() <= 30:
+            self.play_count += 1
+        else:
+            self.play_count = 1
+        self.last_play_time = now
+
+        if self.play_count > 3 and (now - self.last_play_time).total_seconds() <= 30:
+            self.feelings = 'Overjoyed'
+            self.happiness = min(100, self.happiness + random.randint(1, 5)) # Overplaying only slightly increases happiness
+            self.status = 'Unhealthy' if random.random() < 0.1 else self.status # 10% chance of becoming unhealthy due to overplaying
+            self.tiredness = min(100, self.tiredness + 35)
+        else:
+            self.happiness = min(100, self.happiness + random.randint(5, 35))
+            self.tiredness = min(100, self.tiredness + random.randint(1, 10))
+
+    def sleep(self):
+        if self.status != 'Tired':
+            return
+        self.status = 'Sleeping'
+        self.sleep_time = datetime.datetime.now() + datetime.timedelta(seconds=30)
+        self.tiredness = 0
+
+    def get_sleep_time_left(self):
+        if self.status != 'Sleeping':
+            return 0
+        return max(0, (self.sleep_time - datetime.datetime.now()).total_seconds())
 
 def get_terminal_size():
     rows, cols = os.popen('stty size', 'r').read().split()
     return int(rows), int(cols)
 
-def draw_border(pet):
-    print('\033[47m' + ' ' * (pet.boundary[0] + 2) + '\033[0m')  # Top border
-    for _ in range(pet.boundary[1]):
-        print('\033[47m' + ' \033[0m' + ' ' * pet.boundary[0] + '\033[47m' + ' \033[0m')  # Side borders
-    print('\033[47m' + ' ' * (pet.boundary[0] + 2) + '\033[0m')  # Bottom border
-
 def display_quick_stats(pet):
-    print(f'\n\nHunger: {pet.hunger} | Age: {pet.age} | Feelings: {pet.feelings}\n\n')
+    print(f'Hunger: {pet.hunger} | Happiness: {pet.happiness} | Age: {pet.age} | Feelings: {pet.feelings} | Status: {pet.status} | Tiredness: {pet.tiredness}')
+
+def print_menu(sleep_time_left=0):
+    if sleep_time_left > 0:
+        minutes = int(sleep_time_left // 60)
+        seconds = int(sleep_time_left % 60)
+        print(f"Pet is sleeping. Zzz... Time left: {minutes} minutes {seconds} seconds")
+    else:
+        print("1. Display full stats | 2. Feed pet | 3. Play with pet | 4. Create a new pet | 5. Exit")
 
 def create_data_directory():
     """
@@ -155,49 +210,43 @@ if __name__ == "__main__":
         if datetime.datetime.now() - pet.last_activity > datetime.timedelta(hours=1):
             pet.hunger = max(0, pet.hunger - random.randint(20, 60))
     else:
-        pet_name = input("What do you want to name your DigiPal? ")
+        pet_name = input('Please name your pet: ')
         pet = DigiPal(pet_name, terminal_size)
 
-    while True:
-        os.system('clear')
+    while pet.status != 'Dead':
+        os.system('clear')  # Clear the terminal screen
+        print(dog)
+        display_quick_stats(pet)
+        print_menu(pet.get_sleep_time_left())
 
-        print('\n' * pet.position[1], end='')
-        print(' ' * pet.position[0], end='')
+        if pet.status == 'Sleeping':
+            time.sleep(0.2)
+            continue
+
+        selection = get_key()
+        if selection == '1':
+            pet.info()
+        elif selection == '2':
+            pet.feed()
+        elif selection == '3':
+            pet.play()
+        elif selection == '4':
+            pet_name = input('Please name your new pet: ')
+            pet = DigiPal(pet_name, terminal_size)
+        elif selection == '5':
+            pet.last_activity = datetime.datetime.now()
+            with open(DATA_FILE, 'wb') as file:
+                pickle.dump(pet, file)
+            print('Game saved and exited.')
+            break
+        else:
+            print("Invalid selection, please try again.")
+
         if pet.status == 'Dead':
             print(grave)
-        else:
-            print(dog)
-
-        display_quick_stats(pet)
-
-        print('\n\n1. info  | 2. feed  | 3. play  | 4. exit  | 5. new pet\n\n')
+            break
 
         pet.move()
-
-        now = datetime.datetime.now()
-        if pet.last_feed_time is not None and (now - pet.last_feed_time).total_seconds() > 30:
-            pet.feed_count = 0
-
-        choice = get_key()
-
-        if choice == "1":
-            pet.info()
-            time.sleep(2)
-        elif choice == "2":
-            pet.feed()
-        elif choice == "3":
-            pet.play()
-        elif choice == "4":
-            break
-        elif choice == "5":
-            pet_name = input("What do you want to name your new DigiPal? ")
-            pet = DigiPal(pet_name, terminal_size)
-        else:
-            print("Invalid option. Please choose a valid option.")
-
-        with open(DATA_FILE, 'wb') as file:
-            pickle.dump(pet, file)
-
-    with open(DATA_FILE, 'wb') as file:
-        pickle.dump(pet, file)
-    print('Game saved and exited.')
+        time.sleep(0.2)
+        if pet.tiredness >= 100:
+            pet.sleep()
