@@ -26,14 +26,14 @@ pet_y = box_height // 2
 # Function to clear the terminal screen
 def clear_screen():
     print(term.clear)
-
+    
 # Function to move the pet
 def move_pet():
     global pet_x, pet_y
 
-    # Generate random movements
-    dx = random.randint(-1, 1)
-    dy = random.randint(-1, 1)
+    # Generate random movements within a larger range
+    dx = random.randint(-2, 2)
+    dy = random.randint(-2, 2)
 
     # Update the pet's position
     pet_x += dx
@@ -43,11 +43,20 @@ def move_pet():
     pet_x = max(2, min(pet_x, box_width - len(pet_ascii.split('\n')[0]) - 2))
     pet_y = max(2, min(pet_y, box_height - pet_ascii.count('\n') - 2))
 
+
 # Function to display the pet and menu
 def display_pet_and_menu():
     with term.location(0, 0):
+        # Draw the box
+        print(term.white('─' * box_width))
+        for _ in range(box_height - 2):
+            print(term.white('│' + ' ' * (box_width - 2) + '│'))
+        print(term.white('─' * box_width))
+
         # Print the pet
-        print(term.move_xy(pet_x, pet_y) + pet_ascii)
+        lines = pet_ascii.strip().split('\n')
+        for i, line in enumerate(lines):
+            print(term.move_xy(pet_x, pet_y + i) + line)
 
         # Print the menu options
         menu_text = "Menu: 1. Info  |  2. Feed  |  3. Play  |  4. Exit"
