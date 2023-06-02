@@ -72,23 +72,22 @@ class DigiPal:
         print(f'\n\nName: {self.name}\nHunger: {self.hunger}\nDate of Birth: {self.date_of_birth}\nAge: {(datetime.date.today() - self.date_of_birth).days}\nFeelings: {self.feelings}\nStatus: {self.status}\n\n')
 
     def move(self):
-    if self.hunger <= 0 and (self.death_time is None or (datetime.datetime.now() - self.death_time).total_seconds() >= 5 * 60):
-        self.status = 'Dead'
-        return
-    elif self.hunger <= 0 and self.death_time is None:
-        self.death_time = datetime.datetime.now()
+        if self.hunger <= 0 and (self.death_time is None or (datetime.datetime.now() - self.death_time).total_seconds() >= 5 * 60):
+            self.status = 'Dead'
+            return
+        elif self.hunger <= 0 and self.death_time is None:
+            self.death_time = datetime.datetime.now()
 
-    if (datetime.datetime.now() - self.last_activity).total_seconds() >= random.randint(1, 5) * 60:
-        self.hunger = max(0, self.hunger - random.randint(1, 5))
-        self.last_activity = datetime.datetime.now()
+        if (datetime.datetime.now() - self.last_activity).total_seconds() >= random.randint(1, 5) * 60:
+            self.hunger = max(0, self.hunger - random.randint(1, 5))
+            self.last_activity = datetime.datetime.now()
 
-    if self.hunger <= 20:
-        self.feelings = 'Hungry'
-    elif self.hunger <= 40:
-        self.feelings = 'Okay'
-    else:
-        self.feelings = 'Full'
-
+        if self.hunger <= 20:
+            self.feelings = 'Hungry'
+        elif self.hunger <= 40:
+            self.feelings = 'Okay'
+        else:
+            self.feelings = 'Full'
 
     def feed(self):
         if self.status == 'Dead':
@@ -111,6 +110,12 @@ class DigiPal:
 def get_terminal_size():
     rows, cols = os.popen('stty size', 'r').read().split()
     return int(rows), int(cols)
+
+def draw_border(pet):
+    print('\033[47m' + ' ' * (pet.boundary[0] + 2) + '\033[0m')  # Top border
+    for _ in range(pet.boundary[1]):
+        print('\033[47m' + ' \033[0m' + ' ' * pet.boundary[0] + '\033[47m' + ' \033[0m')  # Side borders
+    print('\033[47m' + ' ' * (pet.boundary[0] + 2) + '\033[0m')  # Bottom border
 
 def display_quick_stats(pet):
     print(f'\n\nHunger: {pet.hunger} | Age: {pet.age} | Feelings: {pet.feelings}\n\n')
