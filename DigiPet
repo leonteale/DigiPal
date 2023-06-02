@@ -40,8 +40,8 @@ def move_pet():
     pet_y += dy
 
     # Keep the pet within the boundaries of the box
-    pet_x = max(2, min(pet_x, box_width - len(pet_ascii.strip()) - 2))
-    pet_y = max(2, min(pet_y, box_height - 2))
+    pet_x = max(2, min(pet_x, box_width - len(pet_ascii.split('\n')[0]) - 2))
+    pet_y = max(2, min(pet_y, box_height - pet_ascii.count('\n') - 2))
 
 # Function to display the pet and menu
 def display_pet_and_menu():
